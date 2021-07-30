@@ -1,3 +1,4 @@
+from my_lstm import MyLSTM
 import torch
 from lstm import LSTM
 
@@ -10,7 +11,8 @@ device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('
 print(f"device = {device}")
 
 hidden_size = 128
-model = LSTM(M, hidden_size)
+# model = LSTM(M, hidden_size)
+model = MyLSTM(M, hidden_size)
 model.to(device)
 crit = torch.nn.CrossEntropyLoss()
 optim = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
