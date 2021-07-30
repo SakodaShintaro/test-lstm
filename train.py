@@ -30,8 +30,16 @@ for i in range(1, MAX_STEP + 1):
     teacher = x.view(-1)
 
     loss = crit(logit, teacher)
+
+    # 正答率の計算
+    pred = torch.argmax(logit, dim=1)
+    compare = (pred == teacher)
+    accuracy_all = (compare.sum().float() / compare.numel())
+    compare_batch = compare.view([BATCH_SIZE, N]).all(dim=1)
+    accuracy_batch = (compare_batch.sum().float() / BATCH_SIZE)
+
     elapsed = time.time() - start
-    print(f"{elapsed:5.1f}\t{i:4d}\t{loss.item():.4f}", end="\r")
+    print(f"{elapsed:5.1f}\t{i:4d}\t{loss.item():.4f}\t{accuracy_all.item():.4f}\t{accuracy_batch.item():.4f}", end="\r")
 
     if i % (MAX_STEP // 25) == 0:
         print()
