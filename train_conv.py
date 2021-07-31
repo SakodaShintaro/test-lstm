@@ -15,8 +15,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--model_name", type=str, required=True, choices=model_dict.keys())
 args = parser.parse_args()
 
-MAX_STEP = 50000
 BATCH_SIZE = 256
+EPOCH = 10
 
 model_name = args.model_name
 
@@ -57,7 +57,8 @@ testloader = DataLoader(testset,
 model = model_dict[model_name](1, 128, 10, 4)
 model.to(device)
 crit = torch.nn.CrossEntropyLoss()
-optim = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+optim = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=EPOCH)
 
 result_dir = "./result_mnist"
 os.makedirs(result_dir, exist_ok=True)
@@ -65,8 +66,7 @@ result_file = open(f"{result_dir}/train_log_{model_name}.tsv", "w")
 
 start = time.time()
 
-EPOCH = 10
-for e in range(EPOCH):
+for e in range(1, EPOCH + 1):
     for i, (image, label) in enumerate(trainloader, 1):
         image = image.to(device)
         label = label.to(device)
@@ -83,14 +83,9 @@ for e in range(EPOCH):
         loss_str = f"{elapsed:5.1f}\t{i:4d}\t{loss.item():.4f}\t{accuracy.item():.4f}"
         print(loss_str, end="\r")
 
-        if i % (MAX_STEP // 25) == 0:
-            print()
-            result_file.write(loss_str + "\n")
-
         optim.zero_grad()
         loss.backward()
         optim.step()
-    print()
 
     with torch.no_grad():
         valid_loss = 0
@@ -119,3 +114,4 @@ for e in range(EPOCH):
         loss_str = f"{elapsed:5.1f}\t{e:4d}\t{valid_loss:.4f}\t{valid_acc:.4f}"
         print(loss_str)
         result_file.write(loss_str + "\n")
+    scheduler.step()
