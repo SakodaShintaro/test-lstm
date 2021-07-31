@@ -5,11 +5,12 @@ from torch.utils.data import DataLoader
 from resnet_models.normal_resnet import NormalResNet
 from resnet_models.sharing_resnet import SharingResNet
 from resnet_models.memory_resnet import MemoryResNet
+from resnet_models.memory_resnet2 import MemoryResNet2
 import time
 import os
 import argparse
 
-model_dict = {"normal_resnet": NormalResNet, "sharing_resnet": SharingResNet, "memory_resnet": MemoryResNet}
+model_dict = {"normal_resnet": NormalResNet, "sharing_resnet": SharingResNet, "memory_resnet": MemoryResNet, "memory_resnet2": MemoryResNet2}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_name", type=str, required=True, choices=model_dict.keys())
