@@ -34,20 +34,22 @@ class ResidualBlock(nn.Module):
     def __init__(self, hidden_channels, memory_channels, kernel_size):
         super(ResidualBlock, self).__init__()
         sum_channels = hidden_channels + memory_channels
-        self.conv_input_gate_ = Branch(sum_channels, memory_channels, kernel_size)
+        self.conv_update_gate_ = Branch(sum_channels, memory_channels, kernel_size)
         self.conv_forget_gate_ = Branch(sum_channels, memory_channels, kernel_size)
         self.conv_update_value_ = Branch(sum_channels, memory_channels, kernel_size)
         self.conv_forward_ = Branch(sum_channels, hidden_channels, kernel_size)
 
     def forward(self, x, memory):
-        cat = torch.cat([x, memory], dim=1)
+        cat0 = torch.cat([x, memory], dim=1)
 
-        input_gate = torch.sigmoid(self.conv_input_gate_(cat))
-        forget_gate = torch.sigmoid(self.conv_forget_gate_(cat))
-        update_value = torch.tanh(self.conv_update_value_(cat))
-        next_x = torch.relu(x + self.conv_forward_(cat))
+        update_gate = torch.sigmoid(self.conv_update_gate_(cat0))
+        forget_gate = torch.sigmoid(self.conv_forget_gate_(cat0))
+        update_value = torch.tanh(self.conv_update_value_(cat0))
 
-        memory = input_gate * update_value + forget_gate * memory
+        memory = update_gate * update_value + forget_gate * memory
+
+        cat1 = torch.cat([x, memory], dim=1)
+        next_x = torch.relu(x + self.conv_forward_(cat1))
 
         return next_x, memory
 
@@ -68,7 +70,7 @@ class MemoryResNet2(nn.Module):
         x = self.first_conv_.forward(x)
         x = F.relu(x)
 
-        memory = torch.zeros((x.shape[0], self.memory_channel_num, x.shape[2], x.shape[3])).to(x.device)
+        memory = torch.zeros((x.shape[0], self.memory_channel_num, x.shape[2], x.shape[3]), requires_grad=False).to(x.device)
         for _ in range(self.itr_num):
             x, memory = self.block.forward(x, memory)
         x = self.avg_pool(x)
